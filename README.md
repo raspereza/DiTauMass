@@ -1,4 +1,4 @@
-# C++ Wrapper of fastMTT
+# C++ Wrapper of fastMTT and KinFit routines
 
 ## Content
 
