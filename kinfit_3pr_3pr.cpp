@@ -39,6 +39,7 @@ map<string, py::array_t<double>> kinfit_3pr_3pr(
 						py::array_t<double> sv2_yz_vec,
 						py::array_t<double> sv2_zz_vec,
 						// steering parameters
+						bool full_sv_cov,
 						double mX) {
 
   unsigned int N = pt_1_vec.size();
@@ -96,6 +97,8 @@ map<string, py::array_t<double>> kinfit_3pr_3pr(
   auto py_2_vec = py::array_t<double>(buffer.size);
   auto pz_2_vec = py::array_t<double>(buffer.size);
   auto chi2_vec = py::array_t<double>(buffer.size);
+  auto chi2_met_vec = py::array_t<double>(buffer.size);
+  auto chi2_sv_vec = py::array_t<double>(buffer.size);
   
   py::buffer_info px_1_buffer = px_1_vec.request();
   py::buffer_info py_1_buffer = py_1_vec.request();
@@ -104,6 +107,8 @@ map<string, py::array_t<double>> kinfit_3pr_3pr(
   py::buffer_info py_2_buffer = py_2_vec.request();
   py::buffer_info pz_2_buffer = pz_2_vec.request();
   py::buffer_info chi2_buffer = chi2_vec.request();
+  py::buffer_info chi2_met_buffer = chi2_met_vec.request();
+  py::buffer_info chi2_sv_buffer = chi2_sv_vec.request();
 
   
   double * px_1_opt = static_cast<double *>(px_1_buffer.ptr);
@@ -113,6 +118,8 @@ map<string, py::array_t<double>> kinfit_3pr_3pr(
   double * py_2_opt = static_cast<double *>(py_2_buffer.ptr);
   double * pz_2_opt = static_cast<double *>(pz_2_buffer.ptr);
   double * chi2_opt = static_cast<double *>(chi2_buffer.ptr);
+  double * chi2_met_opt = static_cast<double *>(chi2_met_buffer.ptr);
+  double * chi2_sv_opt = static_cast<double *>(chi2_sv_buffer.ptr);
   
   for (unsigned int i=0; i<N; ++i) {  
 
@@ -175,36 +182,45 @@ map<string, py::array_t<double>> kinfit_3pr_3pr(
     sv_unit[2] = sv_z(i)/sv_mag;
     
     double sv_matrix[3][3]; 
-    /*      
-    sv_matrix[0][0] = 1.0e+4*sv_xx(i);
-    sv_matrix[0][1] = 1.0e+4*sv_xy(i);
-    sv_matrix[0][2] = 1.0e+4*sv_xz(i);
+    if (full_sv_cov) {
+      sv_matrix[0][0] = 1.0e+4*sv_xx(i);
+      sv_matrix[0][1] = 1.0e+4*sv_xy(i);
+      sv_matrix[0][2] = 1.0e+4*sv_xz(i);
     
-    sv_matrix[1][0] = 1.0e+4*sv_xy(i);
-    sv_matrix[1][1] = 1.0e+4*sv_yy(i);
-    sv_matrix[1][2] = 1.0e+4*sv_yz(i);
-
-    sv_matrix[2][0] = 1.0e+4*sv_xz(i);
-    sv_matrix[2][1] = 1.0e+4*sv_yz(i);
-    sv_matrix[2][2] = 1.0e+4*sv_zz(i);
+      sv_matrix[1][0] = 1.0e+4*sv_xy(i);
+      sv_matrix[1][1] = 1.0e+4*sv_yy(i);
+      sv_matrix[1][2] = 1.0e+4*sv_yz(i);
+      
+      sv_matrix[2][0] = 1.0e+4*sv_xz(i);
+      sv_matrix[2][1] = 1.0e+4*sv_yz(i);
+      sv_matrix[2][2] = 1.0e+4*sv_zz(i);
     
-    double svcovinv_det = invertedMatrix(sv_matrix,svcovinv);
-    */
-    
-    //    if (svcovinv_det<1E-12) {
-    //      printf("Warning! Ill-conditioned SV covariance at event index %1i\n",i);
-    //      printf("Diagonilizing SV covariance\n");
-    sv_matrix[0][1] = 0.;
-    sv_matrix[1][0] = 0.;
-    sv_matrix[0][2] = 0.;
-    sv_matrix[2][0] = 0.;
-    sv_matrix[1][2] = 0.;
-    sv_matrix[2][1] = 0.;
-    sv_matrix[0][0] = sv_xx(i);
-    sv_matrix[1][1] = sv_yy(i);
-    sv_matrix[2][2] = sv_zz(i);
-    //    double svcovinv_det = invertedMatrix(sv_matrix,svcovinv);
-    //    }
+      double svcovinv_det = invertedMatrix(sv_matrix,svcovinv);
+      if (svcovinv_det<1E-12) {
+	printf("Warning! Ill-conditioned SV covariance at event index %1i\n",i);
+	printf("Diagonilizing SV covariance\n");
+	sv_matrix[0][1] = 0.;
+	sv_matrix[1][0] = 0.;
+	sv_matrix[0][2] = 0.;
+	sv_matrix[2][0] = 0.;
+	sv_matrix[1][2] = 0.;
+	sv_matrix[2][1] = 0.;
+	sv_matrix[0][0] = 1.0e+4*sv_xx(i);
+	sv_matrix[1][1] = 1.0e+4*sv_yy(i);
+	sv_matrix[2][2] = 1.0e+4*sv_zz(i);
+      }
+    }
+    else {
+      sv_matrix[0][1] = 0.;
+      sv_matrix[1][0] = 0.;
+      sv_matrix[0][2] = 0.;
+      sv_matrix[2][0] = 0.;
+      sv_matrix[1][2] = 0.;
+      sv_matrix[2][1] = 0.;
+      sv_matrix[0][0] = sv_xx(i);
+      sv_matrix[1][1] = sv_yy(i);
+      sv_matrix[2][2] = sv_zz(i);
+    }
       
     double nz[3] = {px_1/ptot_1, py_1/ptot_1, pz_1/ptot_1};    
     double ny[3] = {1.,1.,1.};
@@ -235,35 +251,45 @@ map<string, py::array_t<double>> kinfit_3pr_3pr(
     
     double sv2_matrix[3][3]; 
 
-    /*
-    sv2_matrix[0][0] = 1.0e+4*sv2_xx(i);
-    sv2_matrix[0][1] = 1.0e+4*sv2_xy(i);
-    sv2_matrix[0][2] = 1.0e+4*sv2_xz(i);
+    if (full_sv_cov) {
+      sv2_matrix[0][0] = 1.0e+4*sv2_xx(i);
+      sv2_matrix[0][1] = 1.0e+4*sv2_xy(i);
+      sv2_matrix[0][2] = 1.0e+4*sv2_xz(i);
     
-    sv2_matrix[1][0] = 1.0e+4*sv2_xy(i);
-    sv2_matrix[1][1] = 1.0e+4*sv2_yy(i);
-    sv2_matrix[1][2] = 1.0e+4*sv2_yz(i);
-
-    sv2_matrix[2][0] = 1.0e+4*sv2_xz(i);
-    sv2_matrix[2][1] = 1.0e+4*sv2_yz(i);
-    sv2_matrix[2][2] = 1.0e+4*sv2_zz(i);
-    
-    double svcovinv2_det = invertedMatrix(sv2_matrix,svcovinv2);
-    */
-    //    if (svcovinv2_det<1E-12) {
-    //      printf("Warning! Ill-conditioned SV covariance at event index %1i\n",i);
-    //      printf("Diagonilizing SV covariance\n");
-    sv2_matrix[0][1] = 0.;
-    sv2_matrix[1][0] = 0.;
-    sv2_matrix[0][2] = 0.;
-    sv2_matrix[2][0] = 0.;
-    sv2_matrix[1][2] = 0.;
-    sv2_matrix[2][1] = 0.;
-    sv2_matrix[0][0] = sv2_xx(i);
-    sv2_matrix[1][1] = sv2_yy(i);
-    sv2_matrix[2][2] = sv2_zz(i);
-    //    double svcovinv2_det = invertedMatrix(sv2_matrix,svcovinv2);
-    //    }
+      sv2_matrix[1][0] = 1.0e+4*sv2_xy(i);
+      sv2_matrix[1][1] = 1.0e+4*sv2_yy(i);
+      sv2_matrix[1][2] = 1.0e+4*sv2_yz(i);
+      
+      sv2_matrix[2][0] = 1.0e+4*sv2_xz(i);
+      sv2_matrix[2][1] = 1.0e+4*sv2_yz(i);
+      sv2_matrix[2][2] = 1.0e+4*sv2_zz(i);
+      double svcovinv2_det = invertedMatrix(sv2_matrix,svcovinv2);
+   
+      if (svcovinv2_det<1E-12) {
+	printf("Warning! Ill-conditioned SV covariance at event index %1i\n",i);
+	printf("Diagonilizing SV covariance\n");
+	sv2_matrix[0][1] = 0.;
+	sv2_matrix[1][0] = 0.;
+	sv2_matrix[0][2] = 0.;
+	sv2_matrix[2][0] = 0.;
+	sv2_matrix[1][2] = 0.;
+	sv2_matrix[2][1] = 0.;
+	sv2_matrix[0][0] = 1.0e+4*sv2_xx(i);
+	sv2_matrix[1][1] = 1.0e+4*sv2_yy(i);
+	sv2_matrix[2][2] = 1.0e+4*sv2_zz(i);
+      }
+    }
+    else {
+      sv2_matrix[0][1] = 0.;
+      sv2_matrix[1][0] = 0.;
+      sv2_matrix[0][2] = 0.;
+      sv2_matrix[2][0] = 0.;
+      sv2_matrix[1][2] = 0.;
+      sv2_matrix[2][1] = 0.;
+      sv2_matrix[0][0] = sv2_xx(i);
+      sv2_matrix[1][1] = sv2_yy(i);
+      sv2_matrix[2][2] = sv2_zz(i);
+    }
       
     double nz2[3] = {px_2/ptot_2, py_2/ptot_2, pz_2/ptot_2};    
     double ny2[3];
@@ -282,6 +308,8 @@ map<string, py::array_t<double>> kinfit_3pr_3pr(
     // Perform chi2 scan
     
     double min_chi2 = 1.0e+12;
+    double min_chi2_met = 1.0e+12;
+    double min_chi2_sv = 1.0e+12;
     
     double thetaGJmax = ThetaGJmax(ptot_1,m_1);    
     double theta_range = thetaGJmax;  
@@ -302,11 +330,16 @@ map<string, py::array_t<double>> kinfit_3pr_3pr(
       double a = 1.0;
       double b = -1.0;
       LinearSum(a,b,direction,sv_unit,difference);
-      double chi2_sv = sv_mag*sv_mag*(
-				     difference[0]*difference[0]/sv_matrix[0][0]+
-				     difference[1]*difference[1]/sv_matrix[1][1]+
-				     difference[2]*difference[2]/sv_matrix[2][2]
-				     );
+      double chi2_sv = 1.0e+12;
+      if (full_sv_cov) {
+	double conv = Convolution(svcovinv,difference);
+	chi2_sv = 1.0e+4*sv_mag*sv_mag*conv;
+      }
+      else {
+	chi2_sv = sv_mag*sv_mag*(difference[0]*difference[0]/sv_matrix[0][0]+
+				 difference[1]*difference[1]/sv_matrix[1][1]+
+				 difference[2]*difference[2]/sv_matrix[2][2]);
+      }
 
       // solutions for momentum  
       vector<double> solutions = TauMomGJ(E_1,cosTheta,m_1);
@@ -348,18 +381,25 @@ map<string, py::array_t<double>> kinfit_3pr_3pr(
 	  double a2 = 1.0;
 	  double b2 = -1.0;
 	  LinearSum(a2,b2,direction2,sv2_unit,difference2);
-	  double chi2_sv2 = sv2_mag*sv2_mag*(
-					     difference2[0]*difference2[0]/sv2_matrix[0][0]+
-					     difference2[1]*difference2[1]/sv2_matrix[1][1]+
-					     difference2[2]*difference2[2]/sv2_matrix[2][2]
-					     );
-	
+	  
+	  double chi2_sv2 = 1.0e+12;
+	  if (full_sv_cov) {
+	    double conv = Convolution(svcovinv2,difference2);
+	    chi2_sv2 = 1.0e+4*sv2_mag*sv2_mag*conv;
+	  }
+	  else {
+	    chi2_sv2 = sv2_mag*sv2_mag*(difference2[0]*difference2[0]/sv2_matrix[0][0]+
+					difference2[1]*difference2[1]/sv2_matrix[1][1]+
+					difference2[2]*difference2[2]/sv2_matrix[2][2]);
+	  }	
 	  double chi2 = chi2_met + chi2_sv + chi2_sv2;
 
 	//	  std::cout << "p1  " << pscan_1 <<  "  chi2_met = " << chi2_met << "  chi2_sv = " << chi2_sv << std::endl;
 	
 	  if (chi2 < min_chi2) {
 	    min_chi2 = chi2;
+	    min_chi2_met = chi2_met;
+	    min_chi2_sv = chi2_sv + chi2_sv2;
 	    px_1_opt[i] = pscan_1*direction[0];
 	    py_1_opt[i] = pscan_1*direction[1];
 	    pz_1_opt[i] = pscan_1*direction[2];
@@ -417,15 +457,23 @@ map<string, py::array_t<double>> kinfit_3pr_3pr(
 	    double a2 = 1.0;
 	    double b2 = -1.0;
 	    LinearSum(a2,b2,direction2,sv2_unit,difference2);
-	    double chi2_sv2 = sv2_mag*sv2_mag*(
-					       difference2[0]*difference2[0]/sv2_matrix[0][0]+
-					       difference2[1]*difference2[1]/sv2_matrix[1][1]+
-					       difference2[2]*difference2[2]/sv2_matrix[2][2]
-					       );
+	    double chi2_sv2 = 1.0e+12;
+	    if (full_sv_cov) {
+	      double conv = Convolution(svcovinv2,difference2);
+	      chi2_sv2 = 1.0e+4*sv2_mag*sv2_mag*conv;
+	    }
+	    else {
+	      chi2_sv2 = sv2_mag*sv2_mag*(difference2[0]*difference2[0]/sv2_matrix[0][0]+
+					  difference2[1]*difference2[1]/sv2_matrix[1][1]+
+					  difference2[2]*difference2[2]/sv2_matrix[2][2]);
+	    }
+	    
 	    double chi2 = 0.5*chi2_met + 0.5*chi2_sv + 0.5*chi2_sv2 - logL_mass;
 	
 	    if (chi2 < min_chi2) {
 	      min_chi2 = chi2;
+	      min_chi2_met = 0.5*chi2_met;
+	      min_chi2_sv = 0.5*(chi2_sv+chi2_sv2);
 	      px_1_opt[i] = pscan_1*direction[0];
 	      py_1_opt[i] = pscan_1*direction[1];
 	      pz_1_opt[i] = pscan_1*direction[2];
@@ -438,10 +486,14 @@ map<string, py::array_t<double>> kinfit_3pr_3pr(
       }
     }
     chi2_opt[i] = min_chi2;
+    chi2_met_opt[i] = min_chi2_met;
+    chi2_sv_opt[i] = min_chi2_sv;
   }
 
   map<string, py::array_t<double> > results = {
     {"chi2",chi2_vec},
+    {"chi2_met",chi2_met_vec},
+    {"chi2_sv",chi2_sv_vec},
     {"px_1",px_1_vec},
     {"py_1",py_1_vec},
     {"pz_1",pz_1_vec},

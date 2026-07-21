@@ -8,10 +8,7 @@
 using namespace std;
 namespace py = pybind11;
 
-const double m_ele = 0.51100e-3;
-const double m_muon = 0.10566;
-const double m_tau = 1.77685;
-const double m_pion = 0.13957;
+double m_tau = 1.777;
 
 double invertedMatrix(const double m[3][3], double inv[3][3]) {
 

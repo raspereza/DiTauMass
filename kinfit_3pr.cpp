@@ -28,13 +28,13 @@ map<string, py::array_t<double>> kinfit_3pr(
 					    py::array_t<double> sv_yz_vec,
 					    py::array_t<double> sv_zz_vec,
 					    // steering parameters
-					    bool phiScan,
+					    bool full_sv_cov,
 					    double mX) {
 
   unsigned int N = pt_1_vec.size();
-
-  bool massConstraint = mX > 0.;
   
+  bool massConstraint = mX > 0.;
+  bool phiScan = false;
   double delta=1.0/1.15;
   double reg_order=6.0;
   
@@ -76,6 +76,8 @@ map<string, py::array_t<double>> kinfit_3pr(
   auto py_2_vec = py::array_t<double>(buffer.size);
   auto pz_2_vec = py::array_t<double>(buffer.size);
   auto chi2_vec = py::array_t<double>(buffer.size);
+  auto chi2_met_vec = py::array_t<double>(buffer.size);
+  auto chi2_sv_vec = py::array_t<double>(buffer.size);
   
   py::buffer_info px_1_buffer = px_1_vec.request();
   py::buffer_info py_1_buffer = py_1_vec.request();
@@ -84,7 +86,8 @@ map<string, py::array_t<double>> kinfit_3pr(
   py::buffer_info py_2_buffer = py_2_vec.request();
   py::buffer_info pz_2_buffer = pz_2_vec.request();
   py::buffer_info chi2_buffer = chi2_vec.request();
-
+  py::buffer_info chi2_met_buffer = chi2_met_vec.request();
+  py::buffer_info chi2_sv_buffer = chi2_sv_vec.request();
   
   double * px_1_opt = static_cast<double *>(px_1_buffer.ptr);
   double * py_1_opt = static_cast<double *>(py_1_buffer.ptr);
@@ -93,6 +96,8 @@ map<string, py::array_t<double>> kinfit_3pr(
   double * py_2_opt = static_cast<double *>(py_2_buffer.ptr);
   double * pz_2_opt = static_cast<double *>(pz_2_buffer.ptr);
   double * chi2_opt = static_cast<double *>(chi2_buffer.ptr);
+  double * chi2_met_opt = static_cast<double *>(chi2_met_buffer.ptr);
+  double * chi2_sv_opt = static_cast<double *>(chi2_sv_buffer.ptr);
   
   for (unsigned int i=0; i<N; ++i) {  
 
@@ -110,7 +115,7 @@ map<string, py::array_t<double>> kinfit_3pr(
     double py_2 = pt_2(i)*sin(phi_2(i));
     double pz_2 = pt_2(i)*sinh(eta_2(i));
     double E_2 = sqrt(px_2*px_2+py_2*py_2+pz_2*pz_2+m_2*m_2);
-    double ptot_2 = sqrt(px_2*px_2+py_2*py_2+pz_2*pz_2);
+    //    double ptot_2 = sqrt(px_2*px_2+py_2*py_2+pz_2*pz_2);
     
     // avoiding lorentzvectors from ROOT and awkward
     double px_vis = px_1 + px_2;
@@ -155,34 +160,45 @@ map<string, py::array_t<double>> kinfit_3pr(
     
     double sv_matrix[3][3]; 
 
-    /*
-    sv_matrix[0][0] = 1.0e+4*sv_xx(i);
-    sv_matrix[0][1] = 1.0e+4*sv_xy(i);
-    sv_matrix[0][2] = 1.0e+4*sv_xz(i);
+    if (full_sv_cov) {
+      sv_matrix[0][0] = 1.0e+4*sv_xx(i);
+      sv_matrix[0][1] = 1.0e+4*sv_xy(i);
+      sv_matrix[0][2] = 1.0e+4*sv_xz(i);
     
-    sv_matrix[1][0] = 1.0e+4*sv_xy(i);
-    sv_matrix[1][1] = 1.0e+4*sv_yy(i);
-    sv_matrix[1][2] = 1.0e+4*sv_yz(i);
+      sv_matrix[1][0] = 1.0e+4*sv_xy(i);
+      sv_matrix[1][1] = 1.0e+4*sv_yy(i);
+      sv_matrix[1][2] = 1.0e+4*sv_yz(i);
+      
+      sv_matrix[2][0] = 1.0e+4*sv_xz(i);
+      sv_matrix[2][1] = 1.0e+4*sv_yz(i);
+      sv_matrix[2][2] = 1.0e+4*sv_zz(i);
 
-    sv_matrix[2][0] = 1.0e+4*sv_xz(i);
-    sv_matrix[2][1] = 1.0e+4*sv_yz(i);
-    sv_matrix[2][2] = 1.0e+4*sv_zz(i);
-    */
-    //    double svcovinv_det = invertedMatrix(sv_matrix,svcovinv);
-    //    if (svcovinv_det<1E-12) {
-    //     printf("Warning! Ill-conditioned SV covariance at event index %1i\n",i);
-    //     printf("Diagonilizing SV covariance\n");
-    sv_matrix[0][1] = 0.;
-    sv_matrix[1][0] = 0.;
-    sv_matrix[0][2] = 0.;
-    sv_matrix[2][0] = 0.;
-    sv_matrix[1][2] = 0.;
-    sv_matrix[2][1] = 0.;
-    sv_matrix[0][0] = sv_xx(i);
-    sv_matrix[1][1] = sv_yy(i);
-    sv_matrix[2][2] = sv_zz(i);
-    //    svcovinv_det = invertedMatrix(sv_matrix,svcovinv);
-    //    }
+      double svcovinv_det = invertedMatrix(sv_matrix,svcovinv);
+      if (svcovinv_det<1E-12) {
+	printf("Warning! Ill-conditioned SV covariance at event index %1i\n",i);
+        printf("Diagonilizing SV covariance\n");
+	sv_matrix[0][1] = 0.;
+	sv_matrix[1][0] = 0.;
+	sv_matrix[0][2] = 0.;
+	sv_matrix[2][0] = 0.;
+	sv_matrix[1][2] = 0.;
+	sv_matrix[2][1] = 0.;
+	sv_matrix[0][0] = sv_xx(i);
+	sv_matrix[1][1] = sv_yy(i);
+	sv_matrix[2][2] = sv_zz(i);
+      }
+    }
+    else {
+	sv_matrix[0][1] = 0.;
+	sv_matrix[1][0] = 0.;
+	sv_matrix[0][2] = 0.;
+	sv_matrix[2][0] = 0.;
+	sv_matrix[1][2] = 0.;
+	sv_matrix[2][1] = 0.;
+	sv_matrix[0][0] = sv_xx(i);
+	sv_matrix[1][1] = sv_yy(i);
+	sv_matrix[2][2] = sv_zz(i);
+    }
       
     double nz[3] = {px_1/ptot_1, py_1/ptot_1, pz_1/ptot_1};    
     double ny[3] = {1.,1.,1.};
@@ -200,16 +216,16 @@ map<string, py::array_t<double>> kinfit_3pr(
     
     // perform likelihood scan 
     // see http://cms.cern.ch/iCMS/jsp/openfile.jsp?tp=draft&files=AN2019_032_v3.pdf
-    //    double met_const = 1.0/sqrt(metcovinv_det);
-    //    double sv_const = 1.0/sqrt(svcovinv_det);
     
     double min_chi2 = 1.0e+12;
+    double min_chi2_met = 1.0e+12;
+    double min_chi2_sv  = 1.0e+12;
     
     double thetaGJmax = ThetaGJmax(ptot_1,m_1);    
     double cosThetaSV = Dot(nz,sv_unit);
     if (cosThetaSV>1.0) cosThetaSV=0.999999;
     if (cosThetaSV<-1.0) cosThetaSV=-0.99999;
-    double thetaSV = acos(cosThetaSV);
+    //    double thetaSV = acos(cosThetaSV);
     double theta_range = 2*thetaGJmax;  
     
     // scan over theta 
@@ -228,15 +244,22 @@ map<string, py::array_t<double>> kinfit_3pr(
       double a = 1.0;
       double b = -1.0;
       LinearSum(a,b,direction,sv_unit,difference);
-      double chi2_sv = sv_mag*sv_mag*(
-				      difference[0]*difference[0]/sv_matrix[0][0]+
-				      difference[1]*difference[1]/sv_matrix[1][1]+
-				      difference[2]*difference[2]/sv_matrix[2][2]
-				      );
-
-      //      if (chi2_sv<0) {
-      //	std::cout << "chi2_sv = " << chi2_sv << std::endl;
-      //      }
+      double chi2_sv = 1.0e+12;
+      if (full_sv_cov) {
+	double conv = Convolution(svcovinv,difference);
+	chi2_sv = 1.0e+4*sv_mag*sv_mag*conv;
+      }
+      else {
+	chi2_sv = sv_mag*sv_mag*(difference[0]*difference[0]/sv_matrix[0][0]+
+				 difference[1]*difference[1]/sv_matrix[1][1]+
+				 difference[2]*difference[2]/sv_matrix[2][2]);
+      }
+      // some protection
+      if (chi2_sv<0) {
+	//
+	chi2_sv = 0.0;
+	//      	std::cout << "chi2_sv = " << chi2_sv << std::endl;
+      }
       
       // solutions for momentum  
       vector<double> solutions = TauMomGJ(E_1,cosTheta,m_1);
@@ -271,6 +294,8 @@ map<string, py::array_t<double>> kinfit_3pr(
 	  double chi2 = chi2_met + chi2_sv;
 	  if (chi2 < min_chi2) {
 	    min_chi2 = chi2;
+	    min_chi2_sv = chi2_sv;
+	    min_chi2_met = chi2_met;
 	    px_1_opt[i] = pscan_1*direction[0];
 	    py_1_opt[i] = pscan_1*direction[1];
 	    pz_1_opt[i] = pscan_1*direction[2];
@@ -282,7 +307,7 @@ map<string, py::array_t<double>> kinfit_3pr(
 	    double pi = acos(-1.0);
 	    unsigned int nphi = 100;
 	    double dphi = 2*pi/float(nphi);
-	    for (int i2=0; i2<nphi+1; ++i2) {
+	    for (unsigned int i2=0; i2<nphi+1; ++i2) {
 	      double phi = -pi + dphi*double(i2);
 	      double differencePhi[3] = {0.,0.,0.};
 	      double directionPhi[3] = {0.,0.,0.};
@@ -293,14 +318,21 @@ map<string, py::array_t<double>> kinfit_3pr(
 	      double a = 1.0;
 	      double b = -1.0;
 	      LinearSum(a,b,directionPhi,sv_unit,differencePhi);
-	      double chi2_sv_phi = sv_mag*sv_mag*(
-						  differencePhi[0]*differencePhi[0]/sv_matrix[0][0]+
-						  differencePhi[1]*differencePhi[1]/sv_matrix[1][1]+
-						  differencePhi[2]*differencePhi[2]/sv_matrix[2][2]
-						  ); 
+	      double chi2_sv_phi = 1.0e+12;
+	      if (full_sv_cov) {
+		double conv = Convolution(svcovinv,differencePhi);
+		chi2_sv_phi = 1.0e+4*sv_mag*sv_mag*conv;
+	      }
+	      else {
+		chi2_sv_phi = sv_mag*sv_mag*(differencePhi[0]*differencePhi[0]/sv_matrix[0][0]+
+					     differencePhi[1]*differencePhi[1]/sv_matrix[1][1]+
+					     differencePhi[2]*differencePhi[2]/sv_matrix[2][2]);
+	      }
 	      double chi2_phi = chi2_met + chi2_sv_phi;
 	      if (chi2_phi<min_chi2) {
 		min_chi2 = chi2_phi;
+		min_chi2_met = chi2_met;
+		min_chi2_sv = chi2_sv_phi;
 		px_1_opt[i] = pscan_1*directionPhi[0];
 		py_1_opt[i] = pscan_1*directionPhi[1];
 		pz_1_opt[i] = pscan_1*directionPhi[2];
@@ -357,6 +389,8 @@ map<string, py::array_t<double>> kinfit_3pr(
 	    double chi2 = 0.5*chi2_met + 0.5*chi2_sv - logL_mass;
 	    if (chi2 < min_chi2) {
 	      min_chi2 = chi2;
+	      min_chi2_met = 0.5*chi2_met;
+	      min_chi2_sv = 0.5*chi2_sv;
 	      px_1_opt[i] = pscan_1*direction[0];
 	      py_1_opt[i] = pscan_1*direction[1];
 	      pz_1_opt[i] = pscan_1*direction[2];
@@ -369,10 +403,14 @@ map<string, py::array_t<double>> kinfit_3pr(
       }
     }    
     chi2_opt[i] = min_chi2;
+    chi2_met_opt[i] = min_chi2_met;
+    chi2_sv_opt[i] = min_chi2_sv;
   }
 
   map<string, py::array_t<double> > results = {
     {"chi2",chi2_vec},
+    {"chi2_met",chi2_met_vec},
+    {"chi2_sv",chi2_sv_vec},
     {"px_1",px_1_vec},
     {"py_1",py_1_vec},
     {"pz_1",pz_1_vec},
