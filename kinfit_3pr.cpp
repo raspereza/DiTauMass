@@ -183,9 +183,9 @@ map<string, py::array_t<double>> kinfit_3pr(
 	sv_matrix[2][0] = 0.;
 	sv_matrix[1][2] = 0.;
 	sv_matrix[2][1] = 0.;
-	sv_matrix[0][0] = sv_xx(i);
-	sv_matrix[1][1] = sv_yy(i);
-	sv_matrix[2][2] = sv_zz(i);
+	sv_matrix[0][0] = 1.0e+4*sv_xx(i);
+	sv_matrix[1][1] = 1.0e+4*sv_yy(i);
+	sv_matrix[2][2] = 1.0e+4*sv_zz(i);
       }
     }
     else {

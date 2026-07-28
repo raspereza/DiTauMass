@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 import numpy as np
-from  KinFit import kinfit_3pr#, fastmtt_cpp
+import os 
+from  KinFit import kinfit_3pr, kinfit_3pr_3pr
 import ROOT
 from argparse import ArgumentParser
 
@@ -11,26 +12,31 @@ def fill_hist(hist, array):
 # Main routine #
 ################
 parser = ArgumentParser()
-parser.add_argument('input',help='input file (ROOT or CSV)')
+parser.add_argument('-input','--input',desthelp='input file (ROOT or CSV)')
 parser.add_argument('-channel','--channel',dest='channel',default='tt',choices=['mt','tt'])
+parser.add_argument('-full_sv_cov','--full_sv_cov',dest='full_sv_cov',action='store_true')
 
 args = parser.parse_args()
 
 # location of tuple
-# dirname='/eos/cms/store/group/phys_tau/lrussell/forAliaksei/CPSignalStudies/Run3_2022EE'
+dirname='/eos/cms/store/group/phys_tau/lrussell/forAliaksei/CPSignalStudies/Run3_2022EE'
 # filename=dirname+'/'+args.channel+'/GluGluHTo2Tau_UncorrelatedDecay_SM_Filtered_ProdAndDecay/nominal/merged.root'
 filename = args.input
 # filename = '/eos/home-w/wmatyszk/HiggsDNA/CleanDNA/higgs-dna-waw/combine_test_run/data/nominal.root'
 
 print('')
+if 
 print('opening file %s'%(filename))    
 df = ROOT.RDataFrame("ntuple",filename)
 cuts = 'os>0.5&&idDeepTau2018v2p5VSe_2>=6&&idDeepTau2018v2p5VSmu_2>=4&&idDeepTau2018v2p5VSjet_2>=7&&pt_2>20.&&fabs(eta_2)<2.5&&decayModePNet_2==10&&hasRefitSV_2'
+
+cuts_a1_a1 = cuts + '&&decayModePNet_1==10&&hasRefitSV_1'
 
 if args.channel=='mt':
     cuts += '&&iso_1<0.10&&pt_1>32&&fabs(eta_1)<2.1'
 if args.channel=='tt':
     cuts += '&&idDeepTau2018v2p5VSe_1>=6&&idDeepTau2018v2p5VSmu_1>=4&&idDeepTau2018v2p5VSjet_1>=7&&pt_1>40.&&pt_2>40.&&fabs(eta_1)<2.5'
+    cuts_a1_a1 += '&&idDeepTau2018v2p5VSe_1>=6&&idDeepTau2018v2p5VSmu_1>=4&&idDeepTau2018v2p5VSjet_1>=7&&pt_1>40.&&pt_2>40.&&fabs(eta_1)<2.5'
     
 print('')
 # get list of all branches in the tree
@@ -42,6 +48,7 @@ print('')
 print('reading tuple as numpy columns')
 
 cols = df.Filter(cuts).AsNumpy(all_cols)
+cols_a1_a1 = df.Filter(cuts_a1_a1).AsNumpy(all_cols)
 
 print('')
 print('Length of column : %1i\n'%(len(cols["pt_1"])))
@@ -49,6 +56,7 @@ print('Running KinFit (be patient, it takes awhile)')
 
 # steering parameters
 phiScan = False # don't perform phi scan
+full_sv_cov = False 
 mX = 125.10 # Higgs mass
 width = 2.5 # Higgs mass window for constraint 
 
@@ -73,9 +81,9 @@ results = kinfit_3pr(cols["pt_2"],cols["eta_2"],cols["phi_2"],cols["mass_2"],
                      svx,svy,svz,
                      cols["sv_cov00_2"],cols["sv_cov10_2"],cols["sv_cov20_2"],
                      cols["sv_cov11_2"],cols["sv_cov21_2"],cols["sv_cov22_2"],
-                     phiScan,mX)    
+                     phiScan,full_sv_cov,mX)    
 ###################
-# calling fastMTT #
+# calling  #
 ###################
 # results_MTT = fastmtt_cpp(cols["pt_2"],cols["eta_2"],cols["phi_2"],cols["mass_2"],cols['decay_type_1'],
 #                           cols["pt_1"],cols["eta_1"],cols["phi_1"],cols["mass_1"],cols['decay_type_2'],

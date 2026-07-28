@@ -1,12 +1,24 @@
 #! /usr/bin/env python3
-# Author: Alexei Raspereza (December 2024)
-# Plotting macro to test kinfit
+# Author: Alexei Raspereza (June 2026)
+# Plotting macro to test kinematic fit
 import ROOT
 import math
 import styles
 import os
 
-def Plot(hist1,hist2,**kwargs):
+dict_title = {
+    'mu_a1' : '#mu+a_{1}',
+    'pi_a1' : '#pi+a_{1}',
+    'rho_a1': '#rho+a_{1}',
+    'a1_a1' : 'a_{1}+a_{1}', 
+}
+
+def PlotChi2(hists,**kwargs):
+    channel = kwargs.get('channel','a1_a1')
+    
+
+
+def Plot(hist,**kwargs):
 
     sample = kwargs.get('sample','higgs')
     era = kwargs.get('era','Run3_2022')
