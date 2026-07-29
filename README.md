@@ -11,6 +11,7 @@ This package contains the following components:
 * `test.py` - testing script
 * `pybind11` - folder of pybind11 package (C++ binding to python)
 * `Plot.py` - plotting macro
+* `utils/python/stylesKinFit.py` - python file defining RooT styles
 
 ## Getting code from git
 
@@ -136,6 +137,30 @@ Plotting macro should be run once you've created output RooT files for all sampl
 ./Plot.py --channel ${channel}
 ```
 
-  
+When flag `--full_sv_cov` is specified, the routine accesses RooT files with results of kinematic fit obtained with full SV covariance matrix (i.e. including nondiagonal elements).
 
-This plotting
+When run with option `--channel tt`, the macro produces the following list of plots:
+
+```
+pi_a1_chi2.png
+rho_a1_chi2.png
+a1_a1_chi2.png
+pi_a1_chi2sv.png
+rho_a1_chi2sv.png
+a1_a1_chi2sv.png
+pi_a1_chi2met.png
+rho_a1_chi2met.png
+a1_a1_chi2met.png
+dpt_pi.png
+dpt_rho.png
+dpt_a1.png
+``
+
+When run with option `--channel mt`, the macro produces the following list of plots:
+
+```
+mu_a1_chi2.png
+mu_a1_chi2sv.png
+mu_a1_chi2met.png
+dpt_mu.png
+``

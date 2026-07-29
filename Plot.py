@@ -14,16 +14,16 @@ dict_DM_header = {
 }
 
 dict_Chi2_XTitle = {
-    'chi2' : '#chi^2_{KinFit}',
-    'chi2sv' : '#chi^2_{SV}',
-    'chi2met' : '#chi^2_{MET}',
+    'chi2' : '#chi^{2}_{KinFit}',
+    'chi2sv' : '#chi^{2}_{SV}',
+    'chi2met' : '#chi^{2}_{MET}',
 }
 
 dict_dPt_header = {
-    'mu' : '#tau#rightarrow#mu#nu_{#mu}#nu_{#tau}',
-    'pi' : '#tau#rightarrow#pi#nu_{#tau}',
-    'rho' : '#tau#rightarrow#rho#nu_{#tau}',
-    'a1' : '#tau#rightarrowa_{1}(3-prong)#nu_{#tau}',
+    'mu' : '#tau#rightarrow#mu#nu#nu',
+    'pi' : '#tau#rightarrow#pi#nu',
+    'rho' : '#tau#rightarrow#rho#nu',
+    'a1' : '#tau#rightarrowa_{1}(3-prong)#nu',
 }
 
 def Plot_chi2(hists,**kwargs):
@@ -47,7 +47,7 @@ def Plot_chi2(hists,**kwargs):
     styles.InitModel(hist_DY,xtitle,ytitle,ROOT.kBlue)
     styles.InitModel(hist_Fakes,xtitle,ytitle,ROOT.kBlack)
 
-    hist_ggH.GetYaxis().SetRangeUser(0.011,1.0)
+    hist_ggH.GetYaxis().SetRangeUser(0.0,1.0)
 
     canvas_name = 'canv_%s'%(name)
     canvas = ROOT.TCanvas(canvas_name,'',800,700)
@@ -56,7 +56,7 @@ def Plot_chi2(hists,**kwargs):
     hist_DY.Draw('hsame')
     hist_Fakes.Draw('hsame')
 
-    leg = ROOT.TLegend(0.3,0.6,0.6,0.85)
+    leg = ROOT.TLegend(0.25,0.75,0.5,0.9)
     styles.SetLegendStyle(leg)
     leg.SetHeader(header)
     leg.SetTextSize(0.04)
@@ -77,7 +77,7 @@ def Plot_dpt(hists,**kwargs):
     header = dict_dPt_header[mode]
     hist = hists['ggHdpt_%s'%(mode)]
     
-    xtitle = 'p_{T}^{rec}/p_{T}^{gen}'
+    xtitle = '(p_{T}^{rec}-p_{T}^{gen})/p_{T}^{gen}'
     ytitle = 'normalized to unity'
 
     styles.InitModel(hist,xtitle,ytitle,ROOT.kBlack)
@@ -90,19 +90,19 @@ def Plot_dpt(hists,**kwargs):
     
     hist.Draw('h')
 
-    leg = ROOT.TLegend(0.25,0.8,0.45,0.9)
+    leg = ROOT.TLegend(0.65,0.8,0.85,0.9)
     styles.SetLegendStyle(leg)
     leg.SetHeader(header)
     leg.SetTextSize(0.04)
     leg.Draw()
     
-    legMean = ROOT.TLegend(0.25,0.7,0.45,0.8)
+    legMean = ROOT.TLegend(0.65,0.7,0.85,0.8)
     styles.SetLegendStyle(legMean)
     legMean.SetHeader(headerMean)
     legMean.SetTextSize(0.04)
     legMean.Draw()
 
-    legRMS = ROOT.TLegend(0.25,0.6,0.45,0.7)
+    legRMS = ROOT.TLegend(0.65,0.6,0.85,0.7)
     styles.SetLegendStyle(legRMS)
     legRMS.SetHeader(headerRMS)
     legRMS.SetTextSize(0.04)
