@@ -75,6 +75,22 @@ results = kinfit_3pr_3pr(
 
 ```
 
+Both routines output the dictionary of columns:
+
+```
+results['px_1']     - Px of the total momentum of the 1st tau
+results['py_1']     - Py of the total momentum of the 1st tau
+results['px_1']     - Pz of the total momentum of the 1st tau
+results['px_2']     - Px of the total momentum of the 2nd tau
+results['py_2']     - Py of the total momentum of the 2nd tau
+results['pz_2']     - Pz of the total momentum of the 2nd tau
+results['chi2']     - total chi2 of the kinematic fit
+results['chi2_sv']  - chi2(SV) of the kinematic fit
+results['chi2_met'] - chi2(SV) of the kinematic fit
+```
+
+
+
 ## Running test
 
 ```
