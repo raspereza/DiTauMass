@@ -89,12 +89,39 @@ results['chi2_sv']  - chi2(SV) of the kinematic fit
 results['chi2_met'] - chi2(SV) of the kinematic fit
 ```
 
-
-
 ## Running test
 
 ```
 ./test.py --channel ${channel} --sample ${sample}
 ```
-The script will create RooT file named `kinfit_${channel}_${sample}` which you can inspect.
+Steering cards are:
+* `--channel : available options [tt,mt]`
+* `--sample  : available options [ggH,DY,Fakes]`
+* `--full_sv_cov : optional flag to enable the usage of full SV covariance matrix, if False only diagonal elements are used in computation of chi2(SV)`
 
+The script will create RooT file named `kinfit_${channel}_${sample}.root` which you can inspect.
+
+When running `test.py` with the option `--channel mt` the following histograms are output to the RooT file:
+
+* `dpt_mu`         : (pT(reco)-pT(gen))/pT(gen) of the tau decaying to muon
+* `dpt_a1`         : (pT(reco)-pT(gen))/pT(gen) of the tau decaying to 3-prong mode
+* `chi2_mu_a1`     : chi2 of the kinematic fit in the mu+a1(3-prong) decay mode
+* `chi2sv_mu_a1`   : chi2(SV) of the kinematic fit in the mu+a1(3-prong) decay mode
+* `chi2met_mu_a1`  : chi2(MET) of the kinematic fit in the mu+a1(3-prong) decay mode
+
+When running `test.py` with the option `--channel tt` the following histograms are output to the RooT file:
+
+* `dpt_pi`         : (pT(reco)-pT(gen))/pT(gen) of the tau decaying to pi+v mode
+* `dpt_rho`        : (pT(reco)-pT(gen))/pT(gen) of the tau decaying to rho+v mode
+* `dpt_a1`         : (pT(reco)-pT(gen))/pT(gen) of the tau decaying to 3-prong mode
+* `chi2_pi_a1`     : chi2 of the kinematic fit in the pi+a1 decay mode
+* `chi2sv_pi_a1`   : chi2(SV) of the kinematic fit in the pi+a1 decay modd
+* `chi2met_pi_a1`  : chi2(MET) of the kinematic fit in the pi+a1 decay mode
+* `chi2_rho_a1`    : chi2 of the kinematic fit in the rho+a1 decay mode
+* `chi2sv_rho_a1`  : chi2(SV) of the kinematic fit in the rho+a1 decay mode
+* `chi2met_rho_a1` : chi2(MET) of the kinematic fit in the rho+a1 decay mode
+* `chi2_a1_a1`    : chi2 of the kinematic fit in the a1+a1 decay mode
+* `chi2sv_a1_a1`  : chi2(SV) of the kinematic fit in the a1+a1 decay mode
+* `chi2met_a1_a1` : chi2(MET) of the kinematic fit in the a1+a1 decay mode
+
+## Plotting
