@@ -103,7 +103,7 @@ Steering cards are:
   * `Fakes : data from same-sign sideband`;
 * `--full_sv_cov : optional flag to enable the usage of full SV covariance matrix, if False only diagonal elements are used in computation of chi2(SV)`
 
-The script will create RooT file named `kinfit_${channel}_${sample}.root` (or `kinfit_${channel}_${sample}_svcov.root` if flag --full_sv_cov`` is specified) which you can inspect.
+The script will create RooT file named `kinfit_${channel}_${sample}.root` (or `kinfit_${channel}_${sample}_svcov.root` if flag `--full_sv_cov` is specified) which you can inspect.
 
 When running `test.py` with the option `--channel mt` the following histograms are output to the RooT file:
 
