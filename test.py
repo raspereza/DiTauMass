@@ -301,27 +301,30 @@ outputFile += ".root"
 f = ROOT.TFile(outputFile,"recreate")
 f.cd('')
 if channel=='mt':
-    hist_dpt_mu.Write('dpt_mu')
-    hist_dpt_a1.Write('dpt_a1')
-    hist_chi2_mu_a1.Write('chi2_mu_a1')
-    hist_chi2sv_mu_a1.Write('chi2sv_mu_a1')
-    hist_chi2met_mu_a1.Write('chi2met_mu_a1')
+    
+    hist_dpt_mu.Write(sample+'dpt_mu')
+
+    hist_chi2_mu_a1.Write(sample+'chi2_mu_a1')
+    hist_chi2sv_mu_a1.Write(sample+'chi2sv_mu_a1')
+    hist_chi2met_mu_a1.Write(sample+'chi2met_mu_a1')
+
 else:
-    hist_dpt_pi.Write("dpt_pi")
-    hist_dpt_rho.Write("dpt_rho")
-    hist_dpt_a1.Write("dpt_a1")
+
+    hist_dpt_pi.Write(sample+"dpt_pi")
+    hist_dpt_rho.Write(sample+"dpt_rho")
+    hist_dpt_a1.Write(sample+"dpt_a1")
     
-    hist_chi2_pi_a1.Write("chi2_pi_a1")
-    hist_chi2sv_pi_a1.Write("chi2sv_pi_a1")
-    hist_chi2met_pi_a1.Write("chi2met_pi_a1")
+    hist_chi2_pi_a1.Write(sample+"chi2_pi_a1")
+    hist_chi2sv_pi_a1.Write(sample+"chi2sv_pi_a1")
+    hist_chi2met_pi_a1.Write(sample+"chi2met_pi_a1")
     
-    hist_chi2_rho_a1.Write("chi2_rho_a1")
-    hist_chi2sv_rho_a1.Write("chi2sv_rho_a1")
-    hist_chi2met_rho_a1.Write("chi2met_rho_a1")
+    hist_chi2_rho_a1.Write(sample+"chi2_rho_a1")
+    hist_chi2sv_rho_a1.Write(sample+"chi2sv_rho_a1")
+    hist_chi2met_rho_a1.Write(sample+"chi2met_rho_a1")
     
-    hist_chi2_a1_a1.Write("chi2_a1_a1")
-    hist_chi2sv_a1_a1.Write("chi2sv_a1_a1")
-    hist_chi2met_a1_a1.Write("chi2met_a1_a1")
+    hist_chi2_a1_a1.Write(sample+"chi2_a1_a1")
+    hist_chi2sv_a1_a1.Write(sample+"chi2sv_a1_a1")
+    hist_chi2met_a1_a1.Write(sample+"chi2met_a1_a1")
     
 f.Close()
 print('')

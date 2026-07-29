@@ -130,3 +130,12 @@ When running `test.py` with the option `--channel tt` the following histograms a
 
 ## Plotting
 
+Plotting macro should be run once you've created output RooT files for all samples: `ggH`, `DY`, `Fakes`.
+
+```
+./Plot.py --channel ${channel}
+```
+
+  
+
+This plotting

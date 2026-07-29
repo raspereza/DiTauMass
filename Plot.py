@@ -3,101 +3,116 @@
 # Plotting macro to test kinematic fit
 import ROOT
 import math
-import styles
 import os
+import DiTauMass.utils.stylesKinFit as styles
 
-dict_title = {
+dict_DM_header = {
     'mu_a1' : '#mu+a_{1}',
     'pi_a1' : '#pi+a_{1}',
     'rho_a1': '#rho+a_{1}',
     'a1_a1' : 'a_{1}+a_{1}', 
 }
 
-def PlotChi2(hists,**kwargs):
+dict_Chi2_XTitle = {
+    'chi2' : '#chi^2_{KinFit}',
+    'chi2sv' : '#chi^2_{SV}',
+    'chi2met' : '#chi^2_{MET}',
+}
+
+dict_dPt_header = {
+    'mu' : '#tau#rightarrow#mu#nu_{#mu}#nu_{#tau}',
+    'pi' : '#tau#rightarrow#pi#nu_{#tau}',
+    'rho' : '#tau#rightarrow#rho#nu_{#tau}',
+    'a1' : '#tau#rightarrowa_{1}(3-prong)#nu_{#tau}',
+}
+
+def Plot_chi2(hists,**kwargs):
+    
     channel = kwargs.get('channel','a1_a1')
+    chi2 = kwargs.get('chi2','chi2')
+    hist_ggH = hists['ggH%s_%s'%(chi2,channel)]
+    hist_DY = hists['DY%s_%s'%(chi2,channel)]
+    hist_Fakes = hists['Fakes%s_%s'%(chi2,channel)]
     
-
-
-def Plot(hist,**kwargs):
-
-    sample = kwargs.get('sample','higgs')
-    era = kwargs.get('era','Run3_2022')
-    chan = kwargs.get('chan','mt')
-    isDY = kwargs.get('isDY',True) 
-    plot = kwargs.get('plot',0) # 0 - mass, 1 = dpt1, 2 = dpt2
-    isIC = kwargs.get('isIC',False) # is IC tuple ?
-    isMass = plot==0
+    hist_ggH.Scale(1.0/hist_ggH.GetSumOfWeights())
+    hist_DY.Scale(1.0/hist_DY.GetSumOfWeights())
+    hist_Fakes.Scale(1.0/hist_Fakes.GetSumOfWeights())
     
-    # histograms
-    h_even = hist1
-    h_odd = hist2
-
-    xtitle = 'p_{T,1}^{rec}/p_{T,1}^{gen}'
-    leg_even = 'w/o m_{H}'
-    leg_odd = 'with m_{H}'
-    if isMass:
-        xtitle = 'mass (GeV)'
-        leg_even = 'm_{vis}'
-        leg_odd  = 'm_{#tau#tau}'
-    else:
-        if plot==2:
-            xtitle = 'p_{T,2}^{rec}/p_{T,2}^{gen}'
-
-    header = 'H#rightarrow #tau_{#mu}#tau_{h}'
-    if chan=='tt':
-        header = 'H#rightarrow#tau_{h}#tau_{h}'
-    if isDY:
-        header = 'Z#rightarrow#tau_{#mu}#tau_{h}'
-        if chan=='tt':
-            header = 'Z#rightarrow#tau_{h}#tau_{h}'
-        
-    ytitle = 'normalised'
-
-    styles.InitModel(h_even,xtitle,ytitle,2)
-    styles.InitModel(h_odd,xtitle,ytitle,4)
-
-    utils.zeroBinErrors(h_even)
-    utils.zeroBinErrors(h_odd)
+    xtitle = dict_Chi2_XTitle[chi2]
+    ytitle = 'normalized to unity'
+    header = dict_DM_header[channel]
+    name = '%s_%s'%(channel,chi2)
     
-    YMax = h_even.GetMaximum()
-    if h_odd.GetMaximum()>YMax: YMax = h_odd.GetMaximum()
-    
-    h_even.GetYaxis().SetRangeUser(0.,1.1*YMax)
+    styles.InitModel(hist_ggH,xtitle,ytitle,ROOT.kRed)
+    styles.InitModel(hist_DY,xtitle,ytitle,ROOT.kBlue)
+    styles.InitModel(hist_Fakes,xtitle,ytitle,ROOT.kBlack)
 
-    # canvas and pads
-    canv_name = 'canv_mass'
-    if plot==1:
-        canv_name = 'canv_dpt1'
-    if plot==2:
-        canv_name = 'canv_dpt2'
-    canvas = styles.MakeCanvas(canv_name,"",800,700)
-    
-    h_even.Draw('h')
-    h_odd.Draw('hsame')
+    hist_ggH.GetYaxis().SetRangeUser(0.011,1.0)
 
-    leg = ROOT.TLegend(0.7,0.5,0.9,0.7)
+    canvas_name = 'canv_%s'%(name)
+    canvas = ROOT.TCanvas(canvas_name,'',800,700)
+
+    hist_ggH.Draw('h')
+    hist_DY.Draw('hsame')
+    hist_Fakes.Draw('hsame')
+
+    leg = ROOT.TLegend(0.3,0.6,0.6,0.85)
     styles.SetLegendStyle(leg)
     leg.SetHeader(header)
-    leg.SetTextSize(0.05)
-    leg.AddEntry(h_even,leg_even,'l')
-    leg.AddEntry(h_odd,leg_odd,'l')
+    leg.SetTextSize(0.04)
+    leg.AddEntry(hist_ggH,'H#rightarrow#tau#tau')
+    leg.AddEntry(hist_DY,'Z#rightarrow#tau#tau')
+    leg.AddEntry(hist_Fakes,'jet#rightarrow#tau fakes')
     leg.Draw()
-
-    styles.CMS_label(canvas,era=era,extraText='Simulation')
-
     canvas.RedrawAxis()
     canvas.Modified()
     canvas.Update()
 
-    suffix = 'mass'
-    if plot==1:
-        suffix = 'dpt1'
-    if plot==2:
-        suffix = 'dpt2'
-    outputGraphics = '%s_%s_%s_%s'%(sample,era,chan,suffix)
-    if isIC:
-        outputGraphics += '_tuple'
-    outputGraphics += '.png'
+    graphics = '%s.png'%(name)
+    canvas.Print(graphics)
+    
+def Plot_dpt(hists,**kwargs):
+
+    mode = kwargs.get('mode','a1')
+    header = dict_dPt_header[mode]
+    hist = hists['ggHdpt_%s'%(mode)]
+    
+    xtitle = 'p_{T}^{rec}/p_{T}^{gen}'
+    ytitle = 'normalized to unity'
+
+    styles.InitModel(hist,xtitle,ytitle,ROOT.kBlack)
+
+    headerMean = 'Mean = %4.2f'%(hist.GetMean())
+    headerRMS  = 'RMS  = %4.2f'%(hist.GetRMS())
+    
+    canv_name = 'canv_dpt_%s'%(mode)
+    canvas = styles.MakeCanvas(canv_name,"",800,700)
+    
+    hist.Draw('h')
+
+    leg = ROOT.TLegend(0.25,0.8,0.45,0.9)
+    styles.SetLegendStyle(leg)
+    leg.SetHeader(header)
+    leg.SetTextSize(0.04)
+    leg.Draw()
+    
+    legMean = ROOT.TLegend(0.25,0.7,0.45,0.8)
+    styles.SetLegendStyle(legMean)
+    legMean.SetHeader(headerMean)
+    legMean.SetTextSize(0.04)
+    legMean.Draw()
+
+    legRMS = ROOT.TLegend(0.25,0.6,0.45,0.7)
+    styles.SetLegendStyle(legRMS)
+    legRMS.SetHeader(headerRMS)
+    legRMS.SetTextSize(0.04)
+    legRMS.Draw()
+    
+    canvas.RedrawAxis()
+    canvas.Modified()
+    canvas.Update()
+
+    outputGraphics = 'dpt_%s.png'%(mode)
     canvas.Print(outputGraphics)
 
 if __name__ == "__main__":
@@ -107,69 +122,71 @@ if __name__ == "__main__":
     
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    parser.add_argument('-era' ,'--era', dest='era', default='Run3_2022', choices=['Run3_2022','Run3_2022EE','Run3_2023','Run3_2023BPix'])
-    parser.add_argument('-channel','--channel', dest='channel', default='mt',choices=['mt','et','tt'])
-    parser.add_argument('-sample','--sample',dest='sample',default='higgs',choices=['higgs','dy'])
-    parser.add_argument('-ICTuple','--ICTuple',dest='icTuple',action='store_true')
+    parser.add_argument('-channel','--channel', dest='channel', default='tt',choices=['mt','tt'])
+    parser.add_argument('-full_sv_cov','--full_sv_cov',dest='full_sv_cov',action='store_true')
     args = parser.parse_args()
 
-    era = args.era
-    chan = args.channel
-    sample = args.sample
-    isDY = sample=='dy'
-    isIC = args.icTuple
     
-    name_mvis = 'mvis'
-    name_mtt = 'mtt'
-    name_dpt1 = 'dpt1'
-    name_dpt1_BW = 'dpt1_BW'
-    name_dpt2 = 'dpt2'
-    name_dpt2_BW = 'dpt2_BW'
-    if args.icTuple:
-        name_mtt += '_nom'
-        name_dpt1 += '_nom'
-        name_dpt1_BW += '_nom'
-        name_dpt2 += '_nom'
-        name_dpt2_BW += '_nom'
+    samples = ['ggH','DY','Fakes']
+    histnames_mt = ['dpt_mu','chi2_mu_a1','chi2sv_mu_a1','chi2met_mu_a1']
+    histnames_tt = ['dpt_pi','dpt_rho','dpt_a1','chi2_pi_a1','chi2_rho_a1','chi2_a1_a1','chi2sv_pi_a1','chi2sv_rho_a1','chi2sv_a1_a1','chi2met_pi_a1','chi2met_rho_a1','chi2met_a1_a1',]
+    
+    channel = args.channel
+    full_sv_cov = args.full_sv_cov
+
+    if full_sv_cov:
+        if os.path.isfile('kinfit_%s_svcov.root'%(channel)):
+            os.system('rm kinfit_%s_svcov.root'%(channel))
+        for sample in samples:
+            filename = 'kinfit_%s_%s_svcov.root'%(channel,sample)
+            if not os.path.isfile(filename):
+                print('file %s not found'%(filename))
+                print('run test.py --channel %s --sample %s --full_sv_cov'%(channel,sample))
+                exit()
+        os.system('hadd kinfit_%s_svcov.root kinfit_%s_ggH_svcov.root kinfit_%s_DY_svcov.root kinfit_%s_Fakes_svcov.root'%(channel,channel,channel,channel))
+    else:
+        if os.path.isfile('kinfit_%s.root'%(channel)):
+            os.system('rm kinfit_%s.root'%(channel))
+        for sample in samples:
+            filename = 'kinfit_%s_%s.root'%(channel,sample)
+            if not os.path.isfile(filename):
+                print('file %s not found'%(filename))
+                print('run test.py --channel %s --sample %s'%(channel,sample))
+                exit()
+        os.system('hadd kinfit_%s.root kinfit_%s_ggH.root kinfit_%s_DY.root kinfit_%s_Fakes.root'%(channel,channel,channel,channel))
         
-    filename = '%s_%s_%s.root'%(sample,era,chan)
-    inputfile = ROOT.TFile(filename,'read')
-    h_mvis = inputfile.Get('mvis') 
-    h_mtt = inputfile.Get(name_mtt)
-    h_dpt1 = inputfile.Get(name_dpt1)
-    h_dpt1_BW = inputfile.Get(name_dpt1_BW)
-    h_dpt2 = inputfile.Get(name_dpt2)
-    h_dpt2_BW = inputfile.Get(name_dpt2_BW)
+
+    filename = 'kinfit_%s'%(channel)
+    if full_sv_cov:
+        filename += '_svcov'
+    filename += '.root'
+    inputfile = ROOT.TFile(filename,'READ')
     
-    h_mvis.Scale(1./h_mvis.GetSumOfWeights())
-    h_mtt.Scale(1./h_mtt.GetSumOfWeights())
-    h_dpt1.Scale(1./h_dpt1.GetSumOfWeights())
-    h_dpt1_BW.Scale(1./h_dpt1_BW.GetSumOfWeights())
-    h_dpt2.Scale(1./h_dpt2.GetSumOfWeights())
-    h_dpt2_BW.Scale(1./h_dpt2_BW.GetSumOfWeights())
+    hists = {}
+    for sample in samples:
+        if channel=='tt':
+            for histname in histnames_tt:
+                name = '%s%s'%(sample,histname)
+                hists[name] = inputfile.Get(name)
+                #                print(name,hists[name])
+        else:
+            for histname in histnames_mt:
+                name = '%s%s'%(sample,histname) 
+                hists[name] = inputfile.Get(name)
+                #                print(name,hists[name])
 
-    mean_dpt1 = h_dpt1.GetMean()
-    rms_dpt1 = h_dpt1.GetRMS()
-    mean_dpt1_BW = h_dpt1_BW.GetMean()
-    rms_dpt1_BW = h_dpt1_BW.GetRMS()
 
-    mean_dpt2 = h_dpt2.GetMean()
-    rms_dpt2 = h_dpt2.GetRMS()
-    mean_dpt2_BW = h_dpt2_BW.GetMean()
-    rms_dpt2_BW = h_dpt2_BW.GetRMS()
+    if channel=='tt':
+        for chi2_name in ['chi2','chi2sv','chi2met']:
+            for dm_name in ['pi_a1','rho_a1','a1_a1']:
+                Plot_chi2(hists,channel=dm_name,chi2=chi2_name)
+        for dm_name in ['pi','rho','a1']:
+            Plot_dpt(hists,mode=dm_name)
+    elif channel=='mt':
+        for chi2_name in ['chi2','chi2sv','chi2met']:
+            for dm_name in ['mu_a1']:
+                Plot_chi2(hists,channel=dm_name,chi2=chi2_name)
+        Plot_dpt(hists,mode='mu')
 
-    print('')
-    print('pt1  :   w/o mH : with mH  ')
-    print('Mean :   %5.3f  :  %5.3f'%(mean_dpt1,mean_dpt1_BW))
-    print('RMS  :   %5.3f  :  %5.3f'%(rms_dpt1,rms_dpt1_BW))
-    print('')
-    print('pt2  :   w/o mH : with mH  ')
-    print('Mean :   %5.3f  :  %5.3f'%(mean_dpt2,mean_dpt2_BW))
-    print('RMS  :   %5.3f  :  %5.3f'%(rms_dpt2,rms_dpt2_BW))
-    print('')
-
-    Plot(h_mvis,h_mtt,sample=sample,era=era,isDY=isDY,chan=chan,plot=0,isIC=isIC)
-    Plot(h_dpt1,h_dpt1_BW,sample=sample,era=era,isDY=isDY,chan=chan,plot=1,isIC=isIC)
-    Plot(h_dpt2,h_dpt2_BW,sample=sample,era=era,isDY=isDY,chan=chan,plot=2,isIC=isIC)
     
     
