@@ -132,15 +132,12 @@ When running `test.py` with the option `--channel tt` the following histograms a
 ## Plotting
 
 Plotting macro should be run once you've created output RooT files for all samples: `ggH`, `DY`, `Fakes`.
-
 ```
 ./Plot.py --channel ${channel}
 ```
-
 When flag `--full_sv_cov` is specified, the routine accesses RooT files with results of kinematic fit obtained with full SV covariance matrix (i.e. including nondiagonal elements).
 
 When run with option `--channel tt`, the macro produces the following list of plots:
-
 ```
 pi_a1_chi2.png
 rho_a1_chi2.png
@@ -157,7 +154,6 @@ dpt_a1.png
 ```
 
 When run with the option `--channel mt`, the macro produces the following list of plots:
-
 ```
 mu_a1_chi2.png
 mu_a1_chi2sv.png
