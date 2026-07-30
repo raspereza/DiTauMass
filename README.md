@@ -68,8 +68,8 @@ results = kinfit_3pr_3pr(
 	svcovxx1,svcovxy1,svcovxz1, # SV covariance of the 1st tau
 	svcovyy1,svcovyz1,svcovzz1, # SV covariance of the 1st tau
 	svx2,svy2,svz2, # SV-PV vector of the 2nd tau
-	svcovxx1,svcovxy1,svcovxz1, # SV covariance of the 2nd tau
-	svcovyy1,svcovyz1,svcovzz1, # SV covariance of the 2nd tau
+	svcovxx2,svcovxy2,svcovxz2, # SV covariance of the 2nd tau
+	svcovyy2,svcovyz2,svcovzz2, # SV covariance of the 2nd tau
 	full_sv_cov, # boolean (True : use full SV covariance including non-diagonal entries)
 	mX # mass of the resonance (Higgs mass in CP H->tautau analysis : 125.1 GeV)
 )
