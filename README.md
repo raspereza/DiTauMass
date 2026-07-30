@@ -154,13 +154,13 @@ a1_a1_chi2met.png
 dpt_pi.png
 dpt_rho.png
 dpt_a1.png
-``
+```
 
-When run with option `--channel mt`, the macro produces the following list of plots:
+When run with the option `--channel mt`, the macro produces the following list of plots:
 
 ```
 mu_a1_chi2.png
 mu_a1_chi2sv.png
 mu_a1_chi2met.png
 dpt_mu.png
-``
+```
