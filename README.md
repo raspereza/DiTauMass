@@ -87,7 +87,7 @@ results['py_2']     - Py of the total momentum of the 2nd tau
 results['pz_2']     - Pz of the total momentum of the 2nd tau
 results['chi2']     - total chi2 of the kinematic fit
 results['chi2_sv']  - chi2(SV) of the kinematic fit
-results['chi2_met'] - chi2(SV) of the kinematic fit
+results['chi2_met'] - chi2(MET) of the kinematic fit
 ```
 
 ## Running test

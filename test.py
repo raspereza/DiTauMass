@@ -69,13 +69,8 @@ cuts['a1_rho'] = 'fabs(pion_E_split_2)>0.2&&idDeepTau2018v2p5VSe_2>=2&&idDeepTau
 
 cuts['a1_a1']  = 'idDeepTau2018v2p5VSe_1>=2&&idDeepTau2018v2p5VSmu_1>=4&&idDeepTau2018v2p5VSjet_1>=7&&pt_1>40.&&fabs(eta_1)<2.5&&decayModePNet_1==10&&hasRefitSV_1&&idDeepTau2018v2p5VSe_2>=2&&idDeepTau2018v2p5VSmu_2>=4&&idDeepTau2018v2p5VSjet_2>=7&&pt_2>40.&&fabs(eta_2)<2.5&&decayModePNet_2==10&&hasRefitSV_2'+cuts_sign
 
-chi2max = 25.
-chi2svmax = 5.
-
-# clipping chi-squared of the fit
-chi2_min = 0.01
-chi2_max = chi2max - 0.01
-chi2sv_max = chi2svmax - 0.01
+chi2min = 0.0011
+chi2max = 999.9
 
 # declaring histograms ->
 # (pT(reco)-pT(gen))/pT(gen)
@@ -84,20 +79,20 @@ hist_dpt_pi  = ROOT.TH1D("dpt_pi","",60,0.,3.)
 hist_dpt_rho = ROOT.TH1D("dpt_rho","",60,0.,3.)
 hist_dpt_a1  = ROOT.TH1D("dpt_a1","",60,0.,3.)
 # chi2 of the kinematic fit
-hist_chi2_mu_a1  = ROOT.TH1D("chi2_mu_a1","",25,0.,chi2max)
-hist_chi2_pi_a1  = ROOT.TH1D("chi2_pi_a1","",25,0.,chi2max)
-hist_chi2_rho_a1 = ROOT.TH1D("chi2_rho_a1","",25,0.,chi2max)
-hist_chi2_a1_a1  = ROOT.TH1D("chi2_a1_a1","",25,0.,chi2max)
+hist_chi2_mu_a1  = ROOT.TH1D("chi2_mu_a1","",60,-3.0,3.0)
+hist_chi2_pi_a1  = ROOT.TH1D("chi2_pi_a1","",60,-3.0,3.0)
+hist_chi2_rho_a1 = ROOT.TH1D("chi2_rho_a1","",60,-3.0,3.0)
+hist_chi2_a1_a1  = ROOT.TH1D("chi2_a1_a1","",60,-3.0,3.0)
 # chi2(met) of the kinematic fit
-hist_chi2met_mu_a1  = ROOT.TH1D("chi2met_mu_a1","",25,0.,chi2max)
-hist_chi2met_pi_a1  = ROOT.TH1D("chi2met_pi_a1","",25,0.,chi2max)
-hist_chi2met_rho_a1 = ROOT.TH1D("chi2met_rho_a1","",25,0.,chi2max)
-hist_chi2met_a1_a1  = ROOT.TH1D("chi2met_a1_a1","",25,0.,chi2max)
+hist_chi2met_mu_a1  = ROOT.TH1D("chi2met_mu_a1","",60,-3.0,3.0)
+hist_chi2met_pi_a1  = ROOT.TH1D("chi2met_pi_a1","",60,-3.0,3.0)
+hist_chi2met_rho_a1 = ROOT.TH1D("chi2met_rho_a1","",60,-3.0,3.0)
+hist_chi2met_a1_a1  = ROOT.TH1D("chi2met_a1_a1","",60,-3.0,3.0)
 # chi2(SV) of 
-hist_chi2sv_mu_a1  = ROOT.TH1D("chi2sv_mu_a1","",25,0.,chi2svmax)
-hist_chi2sv_pi_a1  = ROOT.TH1D("chi2sv_pi_a1","",25,0.,chi2svmax)
-hist_chi2sv_rho_a1 = ROOT.TH1D("chi2sv_rho_a1","",25,0.,chi2svmax)
-hist_chi2sv_a1_a1  = ROOT.TH1D("chi2sv_a1_a1","",25,0.,chi2svmax)
+hist_chi2sv_mu_a1  = ROOT.TH1D("chi2sv_mu_a1","",60,-3.0,3.0)
+hist_chi2sv_pi_a1  = ROOT.TH1D("chi2sv_pi_a1","",60,-3.0,3.0)
+hist_chi2sv_rho_a1 = ROOT.TH1D("chi2sv_rho_a1","",60,-3.0,3.0)
+hist_chi2sv_a1_a1  = ROOT.TH1D("chi2sv_a1_a1","",60,-3.0,3.0)
 
 basedir = '/eos/cms/store/group/phys_tau/lrussell/forAliaksei/AprilCPStudies/Run3_2022EE'
 # steering parameters
@@ -176,8 +171,8 @@ for root_file in root_files:
                                          svcovxx1,svcovxy1,svcovxz1, # SV covariance of the 1st tau
                                          svcovyy1,svcovyz1,svcovzz1, # SV covariance of the 1st tau
                                          svx2,svy2,svz2, # SV-PV vector of the 2nd tau
-                                         svcovxx1,svcovxy1,svcovxz1, # SV covariance of the 2nd tau
-                                         svcovyy1,svcovyz1,svcovzz1, # SV covariance of the 2nd tau
+                                         svcovxx2,svcovxy2,svcovxz2, # SV covariance of the 2nd tau
+                                         svcovyy2,svcovyz2,svcovzz2, # SV covariance of the 2nd tau
                                          full_sv_cov,mX # use full SV covariance (bool), m(Higgs)
                                          )
             else:
@@ -209,9 +204,9 @@ for root_file in root_files:
             if sample in ['ggH','DY']:
                 dpt2 = pt2/cols['genPart_pt_2'] 
             # chi2 of the kinematic fit
-            chi2 = np.clip(results['chi2'],chi2_min,chi2_max)
-            chi2met = np.clip(results['chi2_met'],chi2_min,chi2_max)
-            chi2sv = np.clip(results['chi2_sv'],chi2_min,chi2sv_max)
+            chi2 = np.log10(np.clip(results['chi2'],chi2min,chi2max))
+            chi2met = np.log10(np.clip(results['chi2_met'],chi2min,chi2max))
+            chi2sv = np.log10(np.clip(results['chi2_sv'],chi2min,chi2max))
 
             fill_hist(hist_dpt_a1,dpt1)
             if fs=='a1_a1':
@@ -283,9 +278,9 @@ for root_file in root_files:
         if sample in ['ggH','DY']:
             dpt2 = pt2/cols['genPart_pt_2'] 
         # chi2 of the kinematic fit
-        chi2 = np.clip(results['chi2'],chi2_min,chi2_max)
-        chi2met = np.clip(results['chi2_met'],chi2_min,chi2_max)
-        chi2sv = np.clip(results['chi2_sv'],chi2_min,chi2sv_max)
+        chi2 = np.log10(np.clip(results['chi2'],chi2min,chi2max))
+        chi2met = np.log10(np.clip(results['chi2_met'],chi2min,chi2max))
+        chi2sv = np.log10(np.clip(results['chi2_sv'],chi2min,chi2max))
         # filling histograms
         fill_hist(hist_dpt_a1,dpt1)
         fill_hist(hist_dpt_mu,dpt2)
