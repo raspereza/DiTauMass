@@ -30,6 +30,8 @@ def Plot_chi2(hists,**kwargs):
     
     channel = kwargs.get('channel','a1_a1')
     chi2 = kwargs.get('chi2','chi2')
+    full_sv_cov = kwargs.get('full_sv_cov',False)
+    
     hist_ggH = hists['ggH%s_%s'%(chi2,channel)]
     hist_DY = hists['DY%s_%s'%(chi2,channel)]
     hist_Fakes = hists['Fakes%s_%s'%(chi2,channel)]
@@ -47,7 +49,7 @@ def Plot_chi2(hists,**kwargs):
     styles.InitModel(hist_DY,xtitle,ytitle,ROOT.kBlue)
     styles.InitModel(hist_Fakes,xtitle,ytitle,ROOT.kBlack)
 
-    hist_ggH.GetYaxis().SetRangeUser(0.0,1.0)
+    hist_ggH.GetYaxis().SetRangeUser(0.0011,2.0)
 
     canvas_name = 'canv_%s'%(name)
     canvas = ROOT.TCanvas(canvas_name,'',800,700)
@@ -56,7 +58,7 @@ def Plot_chi2(hists,**kwargs):
     hist_DY.Draw('hsame')
     hist_Fakes.Draw('hsame')
 
-    leg = ROOT.TLegend(0.25,0.75,0.5,0.9)
+    leg = ROOT.TLegend(0.35,0.65,0.6,0.9)
     styles.SetLegendStyle(leg)
     leg.SetHeader(header)
     leg.SetTextSize(0.04)
@@ -64,20 +66,27 @@ def Plot_chi2(hists,**kwargs):
     leg.AddEntry(hist_DY,'Z#rightarrow#tau#tau')
     leg.AddEntry(hist_Fakes,'jet#rightarrow#tau fakes')
     leg.Draw()
+    canvas.SetLogy(True)
     canvas.RedrawAxis()
     canvas.Modified()
     canvas.Update()
 
-    graphics = '%s.png'%(name)
+    graphics = name
+    if full_sv_cov:
+        graphics += '_svcov'
+    graphics += '.png'
     canvas.Print(graphics)
     
 def Plot_dpt(hists,**kwargs):
 
     mode = kwargs.get('mode','a1')
+    full_sv_cov = kwargs.get('full_sv_cov',False)
     header = dict_dPt_header[mode]
     hist = hists['ggHdpt_%s'%(mode)]
+    hist.SetBinContent(1,0.)
+    hist.SetBinError(1,0.)
     
-    xtitle = '(p_{T}^{rec}-p_{T}^{gen})/p_{T}^{gen}'
+    xtitle = 'p_{T}^{rec}/p_{T}^{gen}'
     ytitle = 'normalized to unity'
 
     styles.InitModel(hist,xtitle,ytitle,ROOT.kBlack)
@@ -112,8 +121,11 @@ def Plot_dpt(hists,**kwargs):
     canvas.Modified()
     canvas.Update()
 
-    outputGraphics = 'dpt_%s.png'%(mode)
-    canvas.Print(outputGraphics)
+    graphics = 'dpt_%s'%(mode)
+    if full_sv_cov:
+        graphics += '_svcov'
+    graphics += '.png'
+    canvas.Print(graphics)
 
 if __name__ == "__main__":
 
@@ -179,14 +191,14 @@ if __name__ == "__main__":
     if channel=='tt':
         for chi2_name in ['chi2','chi2sv','chi2met']:
             for dm_name in ['pi_a1','rho_a1','a1_a1']:
-                Plot_chi2(hists,channel=dm_name,chi2=chi2_name)
+                Plot_chi2(hists,channel=dm_name,chi2=chi2_name,full_sv_cov=full_sv_cov)
         for dm_name in ['pi','rho','a1']:
-            Plot_dpt(hists,mode=dm_name)
+            Plot_dpt(hists,mode=dm_name,full_sv_cov=full_sv_cov)
     elif channel=='mt':
         for chi2_name in ['chi2','chi2sv','chi2met']:
             for dm_name in ['mu_a1']:
-                Plot_chi2(hists,channel=dm_name,chi2=chi2_name)
-        Plot_dpt(hists,mode='mu')
+                Plot_chi2(hists,channel=dm_name,chi2=chi2_name,full_sv_cov=full_sv_cov)
+        Plot_dpt(hists,mode='mu',full_sv_cov=full_sv_cov)
 
     
     
